@@ -7,6 +7,8 @@
 
 import Router from 'koa-router'
 
+import * as helper from './helper'
+import log from 'lib/log'
 import Project from 'houston/model/project'
 
 const route = new Router({
@@ -28,52 +30,36 @@ route.get('/', async (ctx) => {
   })
   .sort('-downloads')
 
-  // Limit parameter
+  // Limit and offset parameter
   let limit = 10
+  let offset = 0
 
-  if (ctx.query['page[limit]'] != null) {
-    try {
-      limit = Math.abs(Number(ctx.query['page[limit]']))
-    } catch (err) {
-      ctx.status = 400
+  try {
+    limit = helper.limit(ctx.query, limit)
+    offset = helper.offset(ctx.query, offset)
+  } catch (err) {
+    if (err.code === 'APIERR' && err.expose) {
+      ctx.status = err.status
       ctx.body = { errors: [{
-        status: 400,
+        status: err.status,
         title: 'Bad Request',
-        detail: 'Query "page[limit]" needs to be a valid number'
+        detail: err.message
       }]}
       return
     }
-  }
 
-  if (limit > 50) {
-    ctx.status = 400
+    log.error('Error occured while processing query paramiters', err)
+
+    ctx.status = 500
     ctx.body = { errors: [{
-      status: 400,
-      title: 'Bad Request',
-      detail: 'Query "page[limit]" has to be 50 or less'
+      status: 500,
+      title: 'Internal Error',
+      detail: 'Houston ran into an issue processing your request'
     }]}
     return
   }
 
   query.limit(limit)
-
-  // Offset parameter
-  let offset = 0
-
-  if (ctx.query['page[offset]'] != null) {
-    try {
-      offset = Math.abs(Number(ctx.query['page[offset]']))
-    } catch (err) {
-      ctx.status = 400
-      ctx.body = { errors: [{
-        status: 400,
-        title: 'Bad Request',
-        detail: 'Query "page[offset]" needs to be a valid number'
-      }]}
-      return
-    }
-  }
-
   query.skip(offset)
 
   // Clean url for pagation links
