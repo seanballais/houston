@@ -7,24 +7,31 @@
  * @exports {Function} offset - Sets the query offset
  */
 
-import Mistake from 'lib/mistake'
-
 /**
  * APIError
  * A specialty error related to JSON api
  *
- * @param {String} m - message to output to client
+ * @param {Number} status - status code of error message
+ * @param {String} title - title of error to put in error
+ * @param {String} detail - details to put in error response
  */
-export class APIError extends Mistake {
+export class APIError extends Error {
 
   /**
-   * Creates a new APIError from message
+   * Creates a new APIError
    *
-   * @param {String} m - message to output to client
+   * @param {Number} status - status code of error message
+   * @param {String} title - title of error to put in error
+   * @param {String} detail - details to put in error response
    */
-  constructor (m) {
-    super(400, m, true)
+  constructor (status = 400, title = 'Invalid request', detail) {
+    super(title)
+
     this.code = 'APIERR'
+
+    this.status = status
+    this.title = title
+    this.detail = detail
   }
 }
 
@@ -44,12 +51,12 @@ export function limit (param = {}, def = 10, high = 50) {
     try {
       limit = Math.abs(Number(param['page[limit]']))
     } catch (err) {
-      throw new APIError('Query "page[limit]" needs to be a valid number')
+      throw new APIError(400, 'Bad page limit', 'Query "page[limit]" needs to be a valid number')
     }
   }
 
   if (limit > high) {
-    throw new APIError(`Query "page[limit]" has to be ${high} or less`)
+    throw new APIError(422, 'Invalid page limit', `Query "page[limit]" has to be ${high} or less`)
   }
 
   return limit
@@ -70,7 +77,7 @@ export function offset (param = {}, def = 0) {
     try {
       offset = Math.abs(Number(param['page[offset]']))
     } catch (err) {
-      throw new APIError('Query "page[offset]" needs to be a valid number')
+      throw new APIError(400, 'Bad page offset', 'Query "page[offset]" needs to be a valid number')
     }
   }
 
