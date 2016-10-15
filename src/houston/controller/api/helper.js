@@ -83,8 +83,8 @@ export function offset (param = {}, def = 0) {
     }
   }
 
-  if (offset < 1) {
-    throw new APIError(422, 'Invalid page offset', 'Query "page[offset]" has to be greater than 1')
+  if (offset < 0) {
+    throw new APIError(422, 'Invalid page offset', 'Query "page[offset]" has to be greater than 0')
   }
 
   return offset
