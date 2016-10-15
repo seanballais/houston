@@ -49,14 +49,15 @@ export function limit (param = {}, def = 10, high = 50) {
 
   if (param['page[limit]'] != null) {
     try {
-      limit = Math.abs(Number(param['page[limit]']))
+      limit = Number(param['page[limit]'])
+      if (limit == null || Number.isNaN(limit)) throw new Error('Invalid number')
     } catch (err) {
       throw new APIError(400, 'Bad page limit', 'Query "page[limit]" needs to be a valid number')
     }
   }
 
-  if (limit > high) {
-    throw new APIError(422, 'Invalid page limit', `Query "page[limit]" has to be ${high} or less`)
+  if (limit > high || limit < 1) {
+    throw new APIError(422, 'Invalid page limit', `Query "page[limit]" has to be greater than 1 and less than ${high + 1}`)
   }
 
   return limit
@@ -75,10 +76,15 @@ export function offset (param = {}, def = 0) {
 
   if (param['page[offset]'] != null) {
     try {
-      offset = Math.abs(Number(param['page[offset]']))
+      offset = Number(param['page[offset]'])
+      if (offset == null || Number.isNaN(offset)) throw new Error('Invalid number')
     } catch (err) {
       throw new APIError(400, 'Bad page offset', 'Query "page[offset]" needs to be a valid number')
     }
+  }
+
+  if (offset < 1) {
+    throw new APIError(422, 'Invalid page offset', 'Query "page[offset]" has to be greater than 1')
   }
 
   return offset
