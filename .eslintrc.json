@@ -1,7 +1,7 @@
 {
   "name": "houston",
 
-  "plugins": ["ava"],
+  "plugins": ["ava", "html"],
 
   "extends": ["a-standard", "plugin:ava/recommended"],
 

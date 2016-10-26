@@ -29,27 +29,38 @@ export default {
     sourceMapFilename: '[name].map.js'
   },
   module: {
-    loaders: [
-      {
-        test: /\.js$/,
-        loader: 'babel',
-        exclude: /node_modules/
-      },
-      {
-        test: /\.css$/,
-        use: [
-          'style',
-          {
-            loader: 'css',
-            options: { importLoaders: 1 }
-          }, {
-            loader: 'postcss',
-            options: { plugins: [cssnext({ browsers })] }
-          }]
+    loaders: [{
+      test: /\.vue$/,
+      loader: 'vue',
+      options: {
+        loaders: {
+          html: 'pug',
+          css: 'postcss'
+        }
       }
-    ]
+    }, {
+      test: /\.js$/,
+      loader: 'babel',
+      exclude: /node_modules/
+    }, {
+      test: /\.css$/,
+      use: [
+        'style',
+        {
+          loader: 'css',
+          options: { importLoaders: 1 }
+        }, {
+          loader: 'postcss',
+          options: { plugins: [cssnext({ browsers })] }
+        }]
+    }, {
+      test: /\.pug$/,
+      loader: 'pug'
+    }]
   },
-  resolve: { alias: alias.resolve.alias },
+  resolve: { alias: Object.assign(alias.resolve.alias, {
+    'vue': 'vue/dist/vue'
+  })},
   plugins: [
     new webpack.optimize.CommonsChunkPlugin({
       name: 'common',
