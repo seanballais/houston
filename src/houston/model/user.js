@@ -61,12 +61,7 @@ export const schema = new db.Schema({
     },
     visited: Date,
     left: Date
-  },
-
-  projects: [{
-    type: db.Schema.Types.ObjectId,
-    ref: 'project'
-  }]
+  }
 })
 
 export default db.model('user', schema)
