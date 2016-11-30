@@ -7,6 +7,8 @@
  * @exports {Object} default - queue database model
  */
 
+import moment from 'moment'
+
 import db from './connection'
 import Master from './master'
 
@@ -16,13 +18,14 @@ import Master from './master'
  * @property {ObjectId} cycle - Cycle document for work to be done
  *
  * @property {String} status - Current status of work
- * @property [String] error - Error message for what caused the quere item to fail
+ * @property {Number} tries - Amount of times this queue item has been tried
+ * @property {String[]} [error] - Error message for what caused the quere item to fail
  *
  * @property {Object} date - Holds useful dates
  * @property {Date} date.created - Date the queue item was created
- * @property [Date] date.started - Date the queue item was started
- * @property [Date] date.pinged - Date the queue last acknowledged being ran
- * @property [Date] date.finished - Date when the queue item was finished or errored
+ * @property {Date} [date.started] - Date the queue item was started
+ * @property {Date} [date.pinged] - Date the queue last acknowledged being ran
+ * @property {Date} [date.finished] - Date when the queue item was finished or errored
  */
 export const schema = new db.Schema({
   cycle: {
@@ -33,10 +36,14 @@ export const schema = new db.Schema({
 
   status: {
     type: String,
-    enum: ['QUEUE', 'WORK', 'ERROR'],
+    enum: ['QUEUE', 'RUN', 'ERROR'],
     default: 'QUEUE'
   },
-  error: String,
+  tries: {
+    type: Number,
+    default: 0
+  },
+  error: [String],
 
   date: {
     created: {
@@ -63,7 +70,15 @@ export class Queue extends Master {
    */
   static findOneQueue () {
     return this
-    .findOne({ 'status': 'QUEUE' })
+    .findOne({
+      $or: [{
+        'status': 'QUEUE'
+      }, {
+        'status': 'ERROR',
+        'tries': { $lt: 3 },
+        'error': 'Timeout'
+      }]
+    })
     .sort({ 'date.created': 1 })
   }
 
@@ -71,24 +86,37 @@ export class Queue extends Master {
    * findTimeout
    * Returns a list of queue items that are running and have not pinged since
    *
-   * @param {Date} t - Time to query against for last ping acknowledgement
-   *
    * @return {Query} - A queue query to return a list
    */
-  static findTimeout (t) {
-    if (!(t instanceof Date)) {
-      throw new TypeError('Unable to query against a non Date')
-    }
+  static findTimeout () {
+    const expirationDate = moment().subtract(10, 'minutes').toDate()
 
     return this
     .find({
-      $or: [{
-        'status': 'WORK',
-        'date.pinged': { $lt: t }
-      }, {
-        'status': 'ERROR',
-        'error': 'Timeout'
-      }]
+      'status': 'RUN',
+      'date.pinged': { $lt: expirationDate }
+    })
+  }
+
+  /**
+   * cleanTimeout
+   * Finds all timeout queue items and sets them to timeout status. This is much
+   * more efficent than using `findTimeout` and `setStatusToTimeout` as we never
+   * receive the documents.
+   *
+   * @return {Query} - A queue update query
+   */
+  static cleanTimeout () {
+    const expirationDate = moment().subtract(10, 'minutes').toDate()
+
+    return this
+    .update({
+      'status': 'RUN',
+      'date.pinged': { $lt: expirationDate }
+    }, {
+      'status': 'ERROR',
+      'error': 'Timeout',
+      'date.finished': new Date()
     })
   }
 
@@ -99,17 +127,21 @@ export class Queue extends Master {
    * @returns {Boolean} - true if you are running the queue task
    */
   async acknowledge () {
-    const res = await Queue
-    .findOneAndUpdate({
+    const res = await Queue.update({
       '_id': this._id,
       'status': 'QUEUE'
     }, {
-      'status': 'WORK',
-      'date.started': new Date(),
-      'date.pinged': new Date()
+      $set: {
+        'status': 'RUN',
+        'date.started': new Date(),
+        'date.pinged': new Date()
+      },
+      $inc: {
+        'tries': 1
+      }
     })
 
-    return (res != null)
+    return (res['nModified'] !== 0)
   }
 
   /**
@@ -142,13 +174,17 @@ export class Queue extends Master {
    */
   setStatusToError (e) {
     if (!(e instanceof Error)) {
-      throw new Error.TypeError('Unable to set queue error to something other than error')
+      throw new Error('Unable to set queue error to something other than error')
     }
 
     return this.update({
-      'status': 'ERROR',
-      'error': e.message,
-      'date.finished': new Date()
+      $set: {
+        'status': 'ERROR',
+        'date.finished': new Date()
+      },
+      $push: {
+        'error': e.message
+      }
     })
   }
 

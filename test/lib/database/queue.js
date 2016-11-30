@@ -27,12 +27,12 @@ test.serial('can findOneQueue', async (t) => {
 
   const one = await Queue.create({
     cycle: t.context.db.Types.ObjectId(),
-    'date.created': new Date(1, 1, 2001)
+    'date.created': new Date(2001, 1, 1)
   })
 
   const two = await Queue.create({
     cycle: t.context.db.Types.ObjectId(),
-    'date.created': new Date(2, 2, 2002)
+    'date.created': new Date(2002, 2, 2)
   })
 
   await one.save()
@@ -48,25 +48,47 @@ test.serial('can findTimeout', async (t) => {
 
   await Queue.create({
     cycle: t.context.db.Types.ObjectId(),
-    'status': 'WORK',
-    'date.pinged': new Date(1, 1, 2001)
+    'status': 'RUN',
+    'date.pinged': new Date(2001, 1, 1)
   })
 
   await Queue.create({
     cycle: t.context.db.Types.ObjectId(),
-    'status': 'WORK',
-    'date.pinged': new Date(9, 9, 2099)
+    'status': 'RUN',
+    'date.pinged': new Date(2099, 9, 9)
+  })
+
+  const one = await Queue.findTimeout()
+
+  t.is(one.length, 1)
+})
+
+test.serial('can cleanTimeout', async (t) => {
+  const Queue = t.context.Queue
+
+  await Queue.create({
+    cycle: t.context.db.Types.ObjectId(),
+    'status': 'RUN',
+    'date.pinged': new Date(2001, 1, 1)
   })
 
   await Queue.create({
     cycle: t.context.db.Types.ObjectId(),
-    'status': 'ERROR',
-    'error': 'Timeout'
+    'status': 'RUN',
+    'date.pinged': new Date(2099, 9, 9)
   })
 
-  const one = await Queue.findTimeout(new Date(2, 2, 2002))
+  await Queue.create({
+    cycle: t.context.db.Types.ObjectId()
+  })
 
-  t.is(one.length, 2)
+  await Queue.cleanTimeout()
+
+  const one = await Queue.find({
+    'status': 'ERROR'
+  })
+
+  t.is(one.length, 1)
 })
 
 test.serial('can acknowledge', async (t) => {
@@ -81,6 +103,10 @@ test.serial('can acknowledge', async (t) => {
 
   t.true(two)
   t.false(three)
+
+  const four = await Queue.findById(one._id)
+
+  t.is(four.tries, 1)
 })
 
 test.serial('can ping', async (t) => {
@@ -90,7 +116,7 @@ test.serial('can ping', async (t) => {
 
   const one = await Queue.create({
     'cycle': id,
-    'status': 'WORK',
+    'status': 'RUN',
     'date.created': new Date(1, 1, 2001),
     'date.pinged': new Date(2, 2, 2002)
   })
@@ -127,7 +153,7 @@ test.serial('can setStatusToError', async (t) => {
 
   const one = await Queue.create({
     'cycle': t.context.db.Types.ObjectId(),
-    'status': 'WORK',
+    'status': 'RUN',
     'date.created': new Date(1, 1, 2001),
     'date.pinged': new Date(2, 2, 2002)
   })
@@ -137,7 +163,7 @@ test.serial('can setStatusToError', async (t) => {
   const two = await Queue.findById(one._id)
 
   t.is(two.status, 'ERROR')
-  t.is(two.error, err.message)
+  t.is(two.error[0], err.message)
   t.true(two.date.finished != null)
 })
 
@@ -146,7 +172,7 @@ test.serial('can setStatusToTimeout', async (t) => {
 
   const one = await Queue.create({
     'cycle': t.context.db.Types.ObjectId(),
-    'status': 'WORK',
+    'status': 'RUN',
     'date.created': new Date(1, 1, 2001),
     'date.pinged': new Date(2, 2, 2002)
   })
@@ -156,5 +182,6 @@ test.serial('can setStatusToTimeout', async (t) => {
   const two = await Queue.findById(one._id)
 
   t.is(two.status, 'ERROR')
-  t.is(two.error, 'Timeout')
+  t.is(two.error[0], 'Timeout')
+  t.is(two.tries, 0)
 })

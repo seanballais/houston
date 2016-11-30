@@ -9,6 +9,7 @@
 import semver from 'semver'
 
 import db from './connection'
+import Queue from './queue'
 
 /**
  * Stores cycle information. 1 cycle = 1 project version being built
@@ -81,7 +82,7 @@ const schema = new db.Schema({
   _status: {
     type: String,
     default: 'QUEUE',
-    enum: ['QUEUE', 'RUN', 'REVIEW', 'FINISH', 'FAIL', 'ERROR']
+    enum: ['QUEUE', 'DEFER', 'REVIEW', 'FINISH', 'FAIL', 'ERROR']
   },
   mistake: Object
 })
@@ -135,7 +136,10 @@ schema.set('toJSON', {
  * @returns {String} status of cycle
  */
 schema.methods.getStatus = async function () {
-  return this._status
+  if (this._status !== 'DEFER') return this._status
+
+  const queue = await Queue.findOne({ 'cycle': this._id })
+  return queue.status
 }
 
 /**
@@ -176,21 +180,10 @@ schema.methods.setStatus = function (status) {
  * @throws {Mistake} - if an error occured communicating with flightcheck
  * @returns {Void}
  */
-schema.methods.doFlightcheck = function () {
-  return db.model('queue')
-  .create({ 'cycle': this._id })
+schema.methods.doFlightcheck = async function () {
+  await Queue.create({ 'cycle': this._id })
+  return this.update({ '_status': 'DEFER' })
 }
-
-/**
- * Sends test data to flightcheck before save. Reports error on creation
- */
-schema.pre('save', function (next) {
-  if (!this.isNew) return next()
-
-  return this.doFlightcheck()
-  .then(() => next())
-  .catch((error) => next(error))
-})
 
 export { schema }
 export default db.model('cycle', schema)

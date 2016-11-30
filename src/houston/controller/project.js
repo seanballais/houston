@@ -38,10 +38,12 @@ route.get('/cycle', async (ctx, next) => {
     throw new ctx.Mistake(400, 'The project has no releases to cycle')
   }
 
-  await project.createCycle('RELEASE')
+  const cycle = await project.createCycle('RELEASE')
   .catch((err) => {
     throw new ctx.Mistake(500, 'An error occured while creating a new release cycle', err, true)
   })
+
+  await cycle.doFlightcheck()
 
   return ctx.redirect('/dashboard')
 })
