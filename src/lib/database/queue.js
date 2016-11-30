@@ -15,8 +15,6 @@ import Master from './master'
 /**
  * @type {Object} - Queue database schema
  *
- * @property {ObjectId} cycle - Cycle document for work to be done
- *
  * @property {String} status - Current status of work
  * @property {Number} tries - Amount of times this queue item has been tried
  * @property {String[]} [error] - Error message for what caused the quere item to fail
@@ -28,12 +26,6 @@ import Master from './master'
  * @property {Date} [date.finished] - Date when the queue item was finished or errored
  */
 export const schema = new db.Schema({
-  cycle: {
-    type: db.Schema.Types.ObjectId,
-    ref: 'cycle',
-    required: true
-  },
-
   status: {
     type: String,
     enum: ['QUEUE', 'RUN', 'ERROR'],
@@ -89,7 +81,7 @@ export class Queue extends Master {
    * @return {Query} - A queue query to return a list
    */
   static findTimeout () {
-    const expirationDate = moment().subtract(10, 'minutes').toDate()
+    const expirationDate = moment().subtract(30, 'minutes').toDate()
 
     return this
     .find({
@@ -107,7 +99,7 @@ export class Queue extends Master {
    * @return {Query} - A queue update query
    */
   static cleanTimeout () {
-    const expirationDate = moment().subtract(10, 'minutes').toDate()
+    const expirationDate = moment().subtract(30, 'minutes').toDate()
 
     return this
     .update({
@@ -129,7 +121,7 @@ export class Queue extends Master {
   async acknowledge () {
     const res = await Queue.update({
       '_id': this._id,
-      'status': 'QUEUE'
+      'tries': this.tries
     }, {
       $set: {
         'status': 'RUN',
@@ -182,7 +174,7 @@ export class Queue extends Master {
         'status': 'ERROR',
         'date.finished': new Date()
       },
-      $push: {
+      $addToSet: {
         'error': e.message
       }
     })

@@ -49,7 +49,7 @@ const processQueue = async (q) => {
 
 /**
  * processIncome
- * Takes a database Queue document and returns a Pipeline object
+ * Takes a database Queue document and returns data to create a Pipeline with
  *
  * @param {Queue} q - Database queue document to update with
  *
@@ -60,7 +60,7 @@ const processIncome = async (q) => {
     throw new Error('Unable to process outcome with invalid Queue')
   }
 
-  const cycle = await Cycle.findById(q.cycle)
+  const cycle = await Cycle.findOne({ 'queue': q._id })
   if (cycle == null) throw new Error('Unable to find cycle in database')
 
   const changelog = cycle.changelog
@@ -147,7 +147,7 @@ const processOutcome = async (q, p) => {
   }
 
   const cycle = await Cycle.findOneAndUpdate({
-    '_id': q.cycle
+    'queue': q._id
   }, cycleUpdates)
 
   await Project.update({
@@ -156,6 +156,8 @@ const processOutcome = async (q, p) => {
     'apphub': apphub.data,
     'github.label': apphub.data.log.label
   })
+
+  await q.setStatusToFinish()
 }
 
 /**
@@ -188,8 +190,7 @@ const runQueue = async () => {
   }
 
   try {
-    const pipeline = await processQueue(currentQueue)
-    if (pipeline == null) return
+    await processQueue(currentQueue)
 
     return runQueue()
   } catch (err) {

@@ -31,6 +31,10 @@ const schema = new db.Schema({
     ref: 'project',
     required: true
   },
+  queue: {
+    type: db.Schema.Types.ObjectId,
+    ref: 'queue'
+  },
   installation: {
     type: Number,
     required: true
@@ -138,7 +142,8 @@ schema.set('toJSON', {
 schema.methods.getStatus = async function () {
   if (this._status !== 'DEFER') return this._status
 
-  const queue = await Queue.findOne({ 'cycle': this._id })
+  const queue = await Queue.findById(this.queue)
+  if (queue == null) return 'ERROR'
   return queue.status
 }
 
@@ -181,8 +186,12 @@ schema.methods.setStatus = function (status) {
  * @returns {Void}
  */
 schema.methods.doFlightcheck = async function () {
-  await Queue.create({ 'cycle': this._id })
-  return this.update({ '_status': 'DEFER' })
+  const q = await Queue.create({})
+
+  return this.update({
+    'queue': q._id,
+    '_status': 'DEFER'
+  })
 }
 
 export { schema }

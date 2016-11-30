@@ -115,7 +115,6 @@ test.serial('can ping', async (t) => {
   const id = t.context.db.Types.ObjectId()
 
   const one = await Queue.create({
-    'cycle': id,
     'status': 'RUN',
     'date.created': new Date(1, 1, 2001),
     'date.pinged': new Date(2, 2, 2002)
@@ -123,9 +122,7 @@ test.serial('can ping', async (t) => {
 
   await one.ping()
 
-  const two = await Queue.findOne({
-    'cycle': id
-  })
+  const two = await Queue.findById(one._id)
 
   t.true(two.date.pinged.getTime() > new Date(2, 2, 2002).getTime())
 })
