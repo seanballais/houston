@@ -68,6 +68,26 @@ export class Queue extends Master {
   }
 
   /**
+   * findTimeout
+   * Returns a list of queue items that are running and have not pinged since
+   *
+   * @param {Date} t - Time to query against for last ping acknowledgement
+   *
+   * @return {Query} - A queue query to return a list
+   */
+  static findTimeout (t) {
+    if (!(t instanceof Date)) {
+      throw new TypeError('Unable to query against a non Date')
+    }
+
+    return this
+    .find({
+      'status': 'WORK',
+      'date.pinged': { $lt: t }
+    })
+  }
+
+  /**
    * createByCycle
    * Creates a new queue item from the cycle document
    *

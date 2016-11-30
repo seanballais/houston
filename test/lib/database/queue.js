@@ -63,6 +63,31 @@ test.serial('can createByCycle', async (t) => {
   t.is(two['status'], 'QUEUE')
 })
 
+test.serial('can findTimeout', async (t) => {
+  const Queue = t.context.Queue
+
+  await Queue.create({
+    cycle: t.context.db.Types.ObjectId(),
+    'status': 'WORK',
+    'date.pinged': new Date(1, 1, 2001)
+  })
+
+  await Queue.create({
+    cycle: t.context.db.Types.ObjectId(),
+    'status': 'WORK',
+    'date.pinged': new Date(9, 9, 2099)
+  })
+
+  await Queue.create({
+    cycle: t.context.db.Types.ObjectId(),
+    'status': 'ERROR'
+  })
+
+  const one = await Queue.findTimeout(new Date(2, 2, 2002))
+
+  t.is(one.length, 1)
+})
+
 test.serial('can acknowledge', async (t) => {
   const Queue = t.context.Queue
 
