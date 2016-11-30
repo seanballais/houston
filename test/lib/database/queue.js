@@ -43,26 +43,6 @@ test.serial('can findOneQueue', async (t) => {
   t.deepEqual(three._id, one._id)
 })
 
-test.serial('can createByCycle', async (t) => {
-  const Cycle = t.context.Cycle
-  const Queue = t.context.Queue
-
-  const one = await Cycle.create({
-    project: t.context.db.Types.ObjectId(),
-    installation: 1,
-    repo: 'https://github.com/elementary/houston.git',
-    tag: 'master',
-    name: 'com.github.elementary.houston',
-    version: '1.0.0',
-    type: 'RELEASE',
-    changelog: ['a change']
-  })
-
-  const two = await Queue.createByCycle(one)
-
-  t.is(two['status'], 'QUEUE')
-})
-
 test.serial('can findTimeout', async (t) => {
   const Queue = t.context.Queue
 
@@ -80,12 +60,13 @@ test.serial('can findTimeout', async (t) => {
 
   await Queue.create({
     cycle: t.context.db.Types.ObjectId(),
-    'status': 'ERROR'
+    'status': 'ERROR',
+    'error': 'Timeout'
   })
 
   const one = await Queue.findTimeout(new Date(2, 2, 2002))
 
-  t.is(one.length, 1)
+  t.is(one.length, 2)
 })
 
 test.serial('can acknowledge', async (t) => {
@@ -158,4 +139,22 @@ test.serial('can setStatusToError', async (t) => {
   t.is(two.status, 'ERROR')
   t.is(two.error, err.message)
   t.true(two.date.finished != null)
+})
+
+test.serial('can setStatusToTimeout', async (t) => {
+  const Queue = t.context.Queue
+
+  const one = await Queue.create({
+    'cycle': t.context.db.Types.ObjectId(),
+    'status': 'WORK',
+    'date.created': new Date(1, 1, 2001),
+    'date.pinged': new Date(2, 2, 2002)
+  })
+
+  await one.setStatusToTimeout()
+
+  const two = await Queue.findById(one._id)
+
+  t.is(two.status, 'ERROR')
+  t.is(two.error, 'Timeout')
 })

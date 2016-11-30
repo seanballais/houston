@@ -8,10 +8,7 @@
 
 import semver from 'semver'
 
-import * as atc from 'lib/atc'
 import db from './connection'
-
-const sender = new atc.Sender('cycle')
 
 /**
  * Stores cycle information. 1 cycle = 1 project version being built
@@ -179,16 +176,9 @@ schema.methods.setStatus = function (status) {
  * @throws {Mistake} - if an error occured communicating with flightcheck
  * @returns {Void}
  */
-schema.methods.doFlightcheck = async function () {
-  return sender.add('release', {
-    id: this._id,
-    auth: this.installation,
-    repo: this.repo,
-    tag: this.tag,
-    name: this.name,
-    version: this.version,
-    changelog: this.changelog.reverse()
-  })
+schema.methods.doFlightcheck = function () {
+  return db.model('queue')
+  .create({ 'cycle': this._id })
 }
 
 /**

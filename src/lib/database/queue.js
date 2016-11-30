@@ -82,26 +82,14 @@ export class Queue extends Master {
 
     return this
     .find({
-      'status': 'WORK',
-      'date.pinged': { $lt: t }
+      $or: [{
+        'status': 'WORK',
+        'date.pinged': { $lt: t }
+      }, {
+        'status': 'ERROR',
+        'error': 'Timeout'
+      }]
     })
-  }
-
-  /**
-   * createByCycle
-   * Creates a new queue item from the cycle document
-   *
-   * @param {Cycle} c - Cycle to create query item from
-   *
-   * @returns {Query} - A new created Queue document query
-   */
-  static createByCycle (c) {
-    if (!(c instanceof db.model('cycle'))) {
-      throw new TypeError('Unable to create query without Cycle')
-    }
-
-    return this
-    .create({ 'cycle': c['_id'] })
   }
 
   /**
@@ -163,6 +151,16 @@ export class Queue extends Master {
       'date.finished': new Date()
     })
   }
+
+  /**
+   * setStatusToTimeout
+   * Sets the current queue item to timeout error status
+   *
+   * @return {Query} - Queue update query
+   */
+  setStatusToTimeout () {
+    return this.setStatusToError(new Error('Timeout'))
+  }
 }
 
-export default db.model(Queue, schema, 'query')
+export default db.model(Queue, schema, 'queue')
