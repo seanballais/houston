@@ -1,5 +1,5 @@
 /**
- * houston/model/queue.js
+ * lib/database/queue.js
  * Stores queue information to be done by flightcheck
  *
  * @exports {Object} schema - queue database schema
@@ -7,7 +7,7 @@
  * @exports {Object} default - queue database model
  */
 
-import db from 'lib/database'
+import db from './connection'
 import Master from './master'
 
 /**

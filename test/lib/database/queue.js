@@ -1,5 +1,5 @@
 /**
- * test/houston/model/queue.js
+ * test/lib/database/queue.js
  * Tests queue model class methods
  */
 
@@ -15,9 +15,9 @@ test.beforeEach('setup configuration mock', async (t) => {
     database: `${mockConfig['database']}-queue`
   }))
 
-  t.context.db = require(path.resolve(alias.resolve.alias['lib'], 'database')).default
-  t.context.Cycle = require(path.resolve(alias.resolve.alias['houston'], 'model', 'cycle')).default
-  t.context.Queue = require(path.resolve(alias.resolve.alias['houston'], 'model', 'queue')).default
+  t.context.db = require(path.resolve(alias.resolve.alias['lib'], 'database', 'connection')).default
+  t.context.Cycle = require(path.resolve(alias.resolve.alias['lib'], 'database', 'cycle')).default
+  t.context.Queue = require(path.resolve(alias.resolve.alias['lib'], 'database', 'queue')).default
 
   await t.context.Queue.remove({})
 })

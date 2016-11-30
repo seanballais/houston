@@ -1,11 +1,11 @@
 /**
- * src/houston/model/master.js
+ * lib/database/master.js
  * Holds a master class for all other models to inherit from
  *
  * @exports {Class} default - A class for other models to inherit from
  */
 
-import db from 'lib/database'
+import db from './connection'
 
 /**
  * Master

@@ -1,5 +1,5 @@
 /**
- * test/houston/model/master.js
+ * test/lib/database/master.js
  * Tests master model class methods
  */
 
@@ -12,7 +12,7 @@ import mockConfig from 'test/fixtures/config'
 
 test.beforeEach('setup configuration mock', (t) => {
   mock(path.resolve(alias.resolve.alias['root'], 'config.js'), mockConfig)
-  t.context.master = require(path.resolve(alias.resolve.alias['houston'], 'model', 'master')).default
+  t.context.master = require(path.resolve(alias.resolve.alias['lib'], 'database', 'master')).default
 })
 
 test('can sanatize user input', (t) => {

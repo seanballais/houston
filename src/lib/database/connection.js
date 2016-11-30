@@ -1,20 +1,20 @@
 /**
- * lib/database.js
+ * lib/database/connection.js
  * Sets up database connection
  *
- * @exports {Object} - initialized mongoose object
+ * @exports {Object} default - initialized mongoose object
  */
 
 import mongoose from 'mongoose'
 
-import config from './config'
-import Log from './log'
+import config from 'lib/config'
+import Log from 'lib/log'
 
 const log = new Log('lib:database')
 
 mongoose.Promise = global.Promise
 
-mongoose.connect(config.database)
+mongoose.createConnection(config.database)
 
 mongoose.connection.on('error', (msg) => log.error(msg))
 

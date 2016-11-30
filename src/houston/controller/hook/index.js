@@ -43,7 +43,4 @@ route.all('*', (ctx) => {
   return
 })
 
-// Use event hook listeners as well
-require('./flightcheck')
-
 export default route
