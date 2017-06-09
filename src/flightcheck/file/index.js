@@ -16,7 +16,7 @@ const fs = Promise.promisifyAll(require('fs'))
 
 /**
  * File
- * High level interaction of files
+ * High level interaction of files.
  *
  * @property {String} type - File extension
  */
