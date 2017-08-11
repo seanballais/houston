@@ -71,6 +71,52 @@ const findDay = async () => {
   return total
 }
 
+
+/**
+ * findProject
+ * Finds total amount of downloads for a project
+ *
+ * @param {string} app
+ *
+ * @return {object}
+ */
+const findProject = async (app) => {
+  const cachedRes = cache.get(app)
+
+  if (cachedRes != null) {
+    return cachedRes
+  }
+
+  const downloads = await Download.aggregate([
+    { $match: { type: 'year' } },
+    { $lookup: {
+      from: 'Projects',
+      localField: '_id',
+      foreignField: 'releases._id',
+      as: 'project'
+    }},
+    { $match: { 'project._id': app } },
+    { $group: {
+      _id: 0,
+      count: { $sum: 1 },
+      total: { $sum: '$current.total' }
+    }}
+  ])
+
+  if (downloads[0] == null) {
+    return { count: 0, total: 0 }
+  }
+
+  const res = {
+    count: downloads[0]['count'],
+    total: downloads[0]['total']
+  }
+
+  cache.set(app, res)
+  return res
+}
+
+
 /**
  * GET /api/downloads/total
  * Returns the amount of downloads that have hit the server.
@@ -94,6 +140,26 @@ route.get('/day', async (ctx) => {
   const total = await findDay()
 
   ctx.status = 200
+  ctx.body = { data: {
+    total
+  }}
+
+  return
+})
+
+/**
+ * GET /api/downloads/:app
+ * Returns the total amount of downloads for a given app.
+ */
+route.get('/:app', async (ctx) => {
+  let count = 0
+  let total = 0
+
+  if (ctx.params.app != null && ctx.params.app.split('.').length === 3) {
+    const { total, count } = await findProject(ctx.params.app)
+  }
+
+  ctx.status = (count === 0) ? 404: 200
   ctx.body = { data: {
     total
   }}
