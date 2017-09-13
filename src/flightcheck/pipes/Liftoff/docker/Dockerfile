@@ -18,12 +18,11 @@ ENV DEBCONF_NOWARNINGS yes
 # TODO: Update liftoff with official build or ppa
 COPY liftoff_0.1_amd64.deb /tmp/liftoff.deb
 RUN dpkg -i /tmp/liftoff.deb; exit 0
+RUN apt update && apt install -y -f
 
 # install latest nodejs
 RUN curl -sL https://deb.nodesource.com/setup_8.x | bash -
-RUN apt-get install -y nodejs
-
-RUN apt update && apt install -y -f
+RUN apt update && apt install -y -f nodejs
 
 # removes annoying log message
 RUN touch /root/.pbuilderrc
