@@ -20,6 +20,7 @@ import program from 'commander'
 import config from 'lib/config'
 import database from 'lib/database/connection'
 import Pipeline from 'flightcheck/pipeline'
+import seed from 'lib/database/seed'
 
 const databaseOptions = {
   server: {
@@ -102,6 +103,15 @@ program
       console.error(err)
       process.exit(2)
     })
+  })
+
+program
+  .command('seed')
+  .description('seeds the database with random information')
+  .action(async () => {
+    await database.connect(config.database, databaseOptions)
+    await seed()
+    process.exit(0)
   })
 
 program
