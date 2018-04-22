@@ -1,0 +1,11 @@
+<%_ context.changelog.forEach(function (change, i) { _%>
+<%= context.nameDomain %> (<%= change.version %>) <%= context.distribution %>; urgency=low
+
+<% changes[i].forEach(function (c) { _%>
+  * <%= c %>
+<%_ }) _%>
+
+ -- <%= change.author %> <developer@elementary.io>  <%= change.date.toUTCString().replace('GMT', '+0000') _%>
+
+
+<% }) %>

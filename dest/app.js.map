@@ -1,0 +1,1 @@
+{"version":3,"sources":["../src/app.ts"],"names":[],"mappings":";AAAA;;;GAGG;;AAEH,iCAA+B;AAAtB,oBAAA,GAAG,CAAA;AACZ,uCAAqC;AAA5B,0BAAA,MAAM,CAAA","file":"app.js","sourcesContent":["/**\n * houston/src/app.ts\n * Helpful entry points for if houston is being used as a library\n */\n\nexport { App } from './lib/app'\nexport { Config } from './lib/config'\n"]}
