@@ -82,6 +82,7 @@ export class WorkspaceSetup extends Task {
    */
   protected async branches (): Promise<string[]> {
     const repositoryReferences = await this.worker.repository.references()
+    console.log('setup refs: ', repositoryReferences)
 
     const mergableReferences = [
       `${this.worker.context.distribution}`,
@@ -94,7 +95,10 @@ export class WorkspaceSetup extends Task {
       mergableReferences.push(`${this.worker.context.packageSystem}-packaging-${this.worker.context.distribution}-${shortBranch}`)
     }
 
+    console.log('wanted refs: ', mergableReferences)
+
     const packageReferences = WorkspaceSetup.filterRefs(repositoryReferences, mergableReferences)
+    console.log('matching refs: ', packageReferences)
 
     // Returns a unique array. No dups.
     return [...new Set([...this.worker.context.references, ...packageReferences])]

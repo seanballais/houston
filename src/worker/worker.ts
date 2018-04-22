@@ -207,6 +207,7 @@ export class Worker extends EventEmitter implements type.IWorker {
    * @return {void}
    */
   public async setup (): Promise<void> {
+    console.log('starting worker with: ', this.context)
     await this.emitAsync('setup:start')
 
     await fs.ensureDir(this.workspace)

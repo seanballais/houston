@@ -151,6 +151,8 @@ export class Repository implements RepositoryInterface {
 
     const branches = await repo.getReferenceNames(Git.Reference.TYPE.LISTALL)
 
+    console.log('found references: ', branches)
+
     await fs.remove(p)
 
     return branches
