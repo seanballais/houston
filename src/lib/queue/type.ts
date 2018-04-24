@@ -7,8 +7,6 @@ import { EventEmitter } from 'events'
 
 export type Status = 'waiting' | 'active' | 'completed' | 'failed' | 'delayed'
 
-export type HandleCallback = (job: IJob) => Promise<object>
-
 export type OnActiveCallback = (job: IJob) => void
 export type OnProgressCallback = (job: IJob, amount: number) => void
 export type OnFailedCallback = (job: IJob, error: Error) => void
@@ -18,13 +16,15 @@ export type IQueueConstructor = (name: string) => IQueue
 
 export interface IQueue {
   send (data: object, opts?: IJobOptions): Promise<IJob>
-  handle (fn: HandleCallback)
+  handle<T, R> (T): Promise<R>
 
   pause (local: boolean): Promise<void>
   resume (local: boolean): Promise<void>
 
-  empty (): Promise<void>
+  connect (): Promise<void>
   close (): Promise<void>
+
+  empty (): Promise<void>
   count (state?: Status): Promise<number>
   jobs (state: Status): Promise<IJob[]>
 

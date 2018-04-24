@@ -40,8 +40,9 @@ export class Queue implements type.IQueue {
     return new Job(job)
   }
 
-  public async handle (fn) {
-    return this.bull.process(fn)
+  public async handle<T, R> (fn: T): Promise<R> {
+    // @ts-ignore: Type has a return type of any
+    return this.bull.process(1, fn)
   }
 
   public async pause (local) {
@@ -54,6 +55,17 @@ export class Queue implements type.IQueue {
 
   public async empty () {
     return this.bull.empty()
+  }
+
+  public async connect () {
+    await new Promise(async (resolve, reject) => {
+      setTimeout(() => {
+        reject(new Error('Connection timeout'))
+      }, 3600)
+
+      await this.bull.isReady()
+      return resolve()
+    })
   }
 
   public async close () {

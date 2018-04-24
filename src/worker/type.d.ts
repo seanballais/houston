@@ -84,3 +84,5 @@ export interface IWorker extends EventEmitter {
   report (err: Error)
   stop ()
 }
+
+export type IPreset = (config: Config, repository: Repository, context: IContext)
